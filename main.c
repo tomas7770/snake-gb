@@ -4,32 +4,34 @@
 #include <gbdk/font.h>
 
 #include "tiles.h"
+#include "tilemaps.h"
 
 #define STATE_GAME 0
 #define STATE_GAMEOVER 1
 #define STATE_TITLE 2
 #define STATE_PAUSE 3
 
-#define SPD_VERYSLOW 10
-#define SPD_SLOW 8
-#define SPD_NORMAL 6
-#define SPD_FAST 4
-#define SPD_VERYFAST 3
-#define SPD_PRO 2
-
 #define DIR_LEFT 0
 #define DIR_UP 1
 #define DIR_RIGHT 2
 #define DIR_DOWN 3
 
+// Background tiles
 #define TILE_EMPTY 0
 #define TILE_SNAKE 37
-#define TILE_FOOD 38
+
+// Sprite tiles
+#define TILE_FOOD 0
+#define TILE_ARROW 1
 
 #define DUMMY_BODY_TILE 65535
 
 #define get_plr_tile() ( (uint16_t) (plr_y >> 1) * 5 + (plr_x >> 3) ) // (plr_y/8)*20 = plr_y*(5/2)
 #define get_max_snake_size() (score + 3)
+#define get_arrow_height() (64 + (selected_difficulty << 3))
+
+// spd values
+const uint8_t spd_table[5] = {10, 8, 6, 4, 3};
 
 // Game state
 uint8_t state = STATE_TITLE;
@@ -40,6 +42,8 @@ uint8_t spd; // snake moves every spd frames
 bool move_lock; // if true, cannot change snake direction
 bool wrap; // whether screen wrap is enabled or not
 
+uint8_t selected_difficulty; // selected difficulty in menu
+
 uint8_t body_tiles[360]; // tiles occupied by snake body (160/8 * 144/8),
                          // i.e. tile map with empty tiles or snake tiles
 
@@ -49,20 +53,29 @@ uint16_t current_body_tile_i; // index of next element in the array above
 
 uint8_t high_scores[12]; // 6 speed values * (screen wrap or not)
 
-uint8_t joypad_status; // keys pressed
+uint8_t joypad_status; // keys held (in this frame)
+uint8_t joypad_lock = 255; // lock to check if key started being held in this frame;
+                           // locks at the end of game loop if key held,
+                           // unlocks if key not held; 1 is unlocked, 0 is locked
 
 inline void tick();
-inline void init_game();
+inline void init_state_game();
+void init_state_title();
 
 void main(void)
 {
+    // Initialize tile data
     font_init();
     font_load(font_min);
+    set_bkg_data(37, 1, SnakeTiles);
+    set_sprite_data(0, 2, SnakeTiles+16);
 
-    set_bkg_data(37, 2, SnakeTiles);
-    set_bkg_tiles(0, 0, 20, 18, body_tiles);
     SHOW_BKG;
+    SHOW_SPRITES;
     DISPLAY_ON;
+
+    init_state_title();
+
     while(1) {
 		// Game main loop processing
         tick();
@@ -163,18 +176,29 @@ inline void tick()
             break;
 
         case STATE_TITLE:
-            init_game();
-            state = STATE_GAME;
+            if ((joypad_status & joypad_lock & J_UP) && selected_difficulty >= 1) {
+                selected_difficulty--;
+                move_sprite(1, 40, get_arrow_height());
+            }
+            else if ((joypad_status & joypad_lock & J_DOWN) && selected_difficulty <= 3) {
+                selected_difficulty++;
+                move_sprite(1, 40, get_arrow_height());
+            }
+            if (joypad_status & (J_A | J_START)) {
+                init_state_game();
+                state = STATE_GAME;
+            }
             break;
             
         case STATE_PAUSE:
             break;
     }
+    joypad_lock = ~joypad_status;
 }
 
-// Init game state
-inline void init_game()
+inline void init_state_game()
 {
+    set_bkg_tiles(0, 0, 20, 18, body_tiles);
     uint16_t* tile_i;
     for (tile_i = ordered_body_tiles; tile_i < ordered_body_tiles+360; tile_i++)
         *tile_i = DUMMY_BODY_TILE; // set to some unused value
@@ -183,6 +207,15 @@ inline void init_game()
     plr_dir = DIR_LEFT;
     move_lock = false;
     score = 0;
-    spd = SPD_NORMAL;
+    spd = spd_table[selected_difficulty];
     wrap = true;
+    set_sprite_tile(1, TILE_FOOD);
+}
+
+void init_state_title()
+{
+    set_bkg_tiles(0, 0, 20, 18, TitleMap);
+    set_sprite_tile(1, TILE_ARROW);
+    selected_difficulty = 2;
+    move_sprite(1, 40, get_arrow_height());
 }
