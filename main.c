@@ -1,6 +1,7 @@
 #include <gb/gb.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <gbdk/font.h>
 
 #include "tiles.h"
 
@@ -22,8 +23,8 @@
 #define DIR_DOWN 3
 
 #define TILE_EMPTY 0
-#define TILE_SNAKE 1
-#define TILE_FOOD 2
+#define TILE_SNAKE 37
+#define TILE_FOOD 38
 
 #define DUMMY_BODY_TILE 65535
 
@@ -55,7 +56,10 @@ inline void init_game();
 
 void main(void)
 {
-    set_bkg_data(0, 2, SnakeTiles);
+    font_init();
+    font_load(font_min);
+
+    set_bkg_data(37, 2, SnakeTiles);
     set_bkg_tiles(0, 0, 20, 18, body_tiles);
     SHOW_BKG;
     DISPLAY_ON;
