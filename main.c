@@ -131,12 +131,12 @@ inline void tick()
                     else if (plr_x == 160)
                         plr_x = 0;
 
-                    if (plr_y == 248)
+                    if (plr_y == 0)
                         plr_y = 136;
                     else if (plr_y == 144)
-                        plr_y = 0;
+                        plr_y = 8;
                 }
-                else if (plr_x == 248 || plr_x == 160 || plr_y == 248 || plr_y == 144) {
+                else if (plr_x == 248 || plr_x == 160 || plr_y == 0 || plr_y == 144) {
                     state = STATE_GAMEOVER;
                     break;
                 }
