@@ -141,13 +141,13 @@ inline void tick()
                 uint16_t* tile_i = ordered_body_tiles + current_body_tile_i;
                 if (*tile_i != DUMMY_BODY_TILE) {
                     body_tiles[*tile_i] = TILE_EMPTY;
-                    set_bkg_tiles((*tile_i)%20, (*tile_i)/20, 1, 1, body_tiles + *tile_i);
+                    set_bkg_tile_xy((*tile_i)%20, (*tile_i)/20, TILE_EMPTY);
                 }
                 
                 // Record new position
                 uint16_t tile = get_plr_tile();
                 body_tiles[tile] = TILE_SNAKE;
-                set_bkg_tiles(plr_x >> 3, plr_y >> 3, 1, 1, body_tiles + tile);
+                set_bkg_tile_xy(plr_x >> 3, plr_y >> 3, TILE_SNAKE);
                 *tile_i = tile;
                 current_body_tile_i++;
                 if (current_body_tile_i >= get_max_snake_size())
