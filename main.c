@@ -172,10 +172,9 @@ inline void tick()
 inline void init_game()
 {
     uint16_t* tile_i;
-    for (tile_i = ordered_body_tiles; tile_i < ordered_body_tiles+360; tile_i++) {
+    for (tile_i = ordered_body_tiles; tile_i < ordered_body_tiles+360; tile_i++)
         *tile_i = DUMMY_BODY_TILE; // set to some unused value
-    }
-    plr_x = 120;
+    plr_x = 80;
     plr_y = 64;
     plr_dir = DIR_LEFT;
     move_lock = false;
