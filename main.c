@@ -31,7 +31,7 @@
 #define get_arrow_height() (64 + (selected_difficulty << 3))
 
 // spd values
-const uint8_t spd_table[5] = {10, 8, 6, 4, 3};
+const uint8_t spd_table[5] = {12, 10, 8, 6, 4};
 
 // Game state
 uint8_t state = STATE_TITLE;
