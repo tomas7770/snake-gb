@@ -68,7 +68,6 @@ void init_state_gameover();
 inline void set_food_pos();
 void update_wrap_text();
 void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y);
-void draw_number_window(uint8_t number, uint8_t tile_x, uint8_t tile_y);
 
 void main(void)
 {
@@ -79,6 +78,7 @@ void main(void)
     set_sprite_data(0, 2, SnakeTiles+16);
 
     SHOW_BKG;
+    SHOW_WIN;
     SHOW_SPRITES;
     DISPLAY_ON;
 
@@ -259,7 +259,7 @@ inline void init_state_game()
 
 void init_state_title()
 {
-    set_bkg_tiles(0, 0, 20, 18, TitleMap);
+    set_win_tiles(0, 0, 20, 18, TitleMap);
     set_sprite_tile(1, TILE_ARROW);
     move_sprite(1, 40, get_arrow_height());
     update_wrap_text();
@@ -268,7 +268,7 @@ void init_state_title()
 
 void init_state_gameover()
 {
-    set_bkg_tiles(0, 0, 20, 18, GameoverMap);
+    set_win_tiles(0, 0, 20, 18, GameoverMap);
     move_sprite(1, 0, 0);
     draw_number(score, 11, 10);
     state = STATE_GAMEOVER;
@@ -284,24 +284,24 @@ inline void set_food_pos() {
 void update_wrap_text() {
     if (wrap) {
         // (O)n
-        set_bkg_tile_xy(12, 15, 24);
-        set_bkg_tile_xy(13, 15, 0);
+        set_win_tile_xy(12, 15, 24);
+        set_win_tile_xy(13, 15, 0);
     }
     else {
         // (O)ff
-        set_bkg_tile_xy(12, 15, 16);
-        set_bkg_tile_xy(13, 15, 16);
+        set_win_tile_xy(12, 15, 16);
+        set_win_tile_xy(13, 15, 16);
     }
 }
 
-// Draws a number in the background
+// Draws a number in the window
 void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y) {
     str_point = str_buf;
     uint2bcd((uint16_t) number, &bcd);
     bcd2text(&bcd, 1, str_point);
     str_point += 5; // only display last 3 digits
     while (*str_point != '\0') {
-        set_bkg_tile_xy(tile_x, tile_y, *str_point);
+        set_win_tile_xy(tile_x, tile_y, *str_point);
         tile_x++;
         str_point++;
     }
