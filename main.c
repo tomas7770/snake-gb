@@ -31,6 +31,7 @@
 #define get_plr_tile() ( (uint16_t) (plr_y >> 1) * 5 + (plr_x >> 3) ) // (plr_y/8)*20 = plr_y*(5/2)
 #define get_max_snake_size() (score + 3)
 #define get_arrow_height() (64 + (selected_difficulty << 3))
+#define get_highscore_ptr() (high_scores + selected_difficulty + (wrap ? 5 : 0))
 
 // spd values
 const uint8_t spd_table[5] = {12, 10, 8, 6, 4};
@@ -67,6 +68,7 @@ void init_state_title();
 void init_state_gameover();
 inline void set_food_pos();
 void update_wrap_text();
+void update_highscore_text();
 void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y);
 
 void main(void)
@@ -196,7 +198,7 @@ inline void tick()
         case STATE_GAMEOVER:
             if (joypad_status & (J_A | J_START)) {
                 // Save high score (if it's the case)
-                uint8_t* high_score_i = high_scores + selected_difficulty + (wrap ? 5 : 0);
+                uint8_t* high_score_i = get_highscore_ptr();
                 if (score > *high_score_i)
                     *high_score_i = score;
 
@@ -208,14 +210,17 @@ inline void tick()
             if ((joypad_status & joypad_lock & J_UP) && selected_difficulty >= 1) {
                 selected_difficulty--;
                 move_sprite(1, 40, get_arrow_height());
+                update_highscore_text();
             }
             else if ((joypad_status & joypad_lock & J_DOWN) && selected_difficulty <= 3) {
                 selected_difficulty++;
                 move_sprite(1, 40, get_arrow_height());
+                update_highscore_text();
             }
             if (joypad_status & joypad_lock & J_SELECT) {
                 wrap = !wrap;
                 update_wrap_text();
+                update_highscore_text();
             }
             if (joypad_status & joypad_lock & (J_A | J_START)) {
                 init_state_game();
@@ -263,6 +268,7 @@ void init_state_title()
     set_sprite_tile(1, TILE_ARROW);
     move_sprite(1, 40, get_arrow_height());
     update_wrap_text();
+    update_highscore_text();
     state = STATE_TITLE;
 }
 
@@ -292,6 +298,11 @@ void update_wrap_text() {
         set_win_tile_xy(12, 15, 16);
         set_win_tile_xy(13, 15, 16);
     }
+}
+
+void update_highscore_text() {
+    uint8_t* high_score_i = get_highscore_ptr();
+    draw_number(*high_score_i, 5, 0);
 }
 
 // Draws a number in the window
