@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <rand.h>
 #include <gbdk/font.h>
+#include <gb/bcd.h>
 
 #include "tiles.h"
 #include "tilemaps.h"
@@ -35,7 +36,7 @@
 const uint8_t spd_table[5] = {12, 10, 8, 6, 4};
 
 // Game state
-uint8_t state = STATE_TITLE;
+uint8_t state;
 uint8_t plr_x, plr_y, plr_dir; // snake head position and direction
 uint8_t food_x, food_y;
 uint8_t score;
@@ -49,17 +50,25 @@ uint16_t ordered_body_tiles[360]; // stores snake body tile indexes in order
                                   // of "creation"
 uint16_t current_body_tile_i; // index of next element in the array above
 
-uint8_t high_scores[12]; // 6 speed values * (screen wrap or not)
+uint8_t high_scores[10]; // 5 speed values * (screen wrap or not)
 
 uint8_t joypad_status; // keys held (in this frame)
 uint8_t joypad_lock = 255; // lock to check if key started being held in this frame;
                            // locks at the end of game loop if key held,
                            // unlocks if key not held; 1 is unlocked, 0 is locked
 
+BCD bcd = MAKE_BCD(0);
+uint8_t str_buf[9]; // string buffer for numbers
+uint8_t* str_point; // variable pointer for buffer above
+
 inline void tick();
 inline void init_state_game();
 void init_state_title();
+void init_state_gameover();
 inline void set_food_pos();
+void update_wrap_text();
+void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y);
+void draw_number_window(uint8_t number, uint8_t tile_x, uint8_t tile_y);
 
 void main(void)
 {
@@ -117,6 +126,10 @@ inline void tick()
                 }
             }
 
+            // Pause
+            if (joypad_status & joypad_lock & J_START)
+                state = STATE_PAUSE;
+
             if (!(sys_time % spd)) {
                 // Movement
                 switch (plr_dir)
@@ -149,7 +162,7 @@ inline void tick()
                         plr_y = 8;
                 }
                 else if (plr_x == 248 || plr_x == 160 || plr_y == 0 || plr_y == 144) {
-                    state = STATE_GAMEOVER;
+                    init_state_gameover();
                     break;
                 }
 
@@ -163,7 +176,7 @@ inline void tick()
                 uint16_t tile = get_plr_tile();
                 if (get_bkg_tile_xy(plr_x >> 3, plr_y >> 3) == TILE_SNAKE) {
                     // Collision with body
-                    state = STATE_GAMEOVER;
+                    init_state_gameover();
                     break;
                 }
                 set_bkg_tile_xy(plr_x >> 3, plr_y >> 3, TILE_SNAKE);
@@ -181,8 +194,14 @@ inline void tick()
             break;
 
         case STATE_GAMEOVER:
-            init_state_title();
-            state = STATE_TITLE;
+            if (joypad_status & (J_A | J_START)) {
+                // Save high score (if it's the case)
+                uint8_t* high_score_i = high_scores + selected_difficulty + (wrap ? 5 : 0);
+                if (score > *high_score_i)
+                    *high_score_i = score;
+
+                init_state_title();
+            }
             break;
 
         case STATE_TITLE:
@@ -194,15 +213,19 @@ inline void tick()
                 selected_difficulty++;
                 move_sprite(1, 40, get_arrow_height());
             }
-            if (joypad_status & joypad_lock & J_SELECT)
+            if (joypad_status & joypad_lock & J_SELECT) {
                 wrap = !wrap;
-            if (joypad_status & (J_A | J_START)) {
+                update_wrap_text();
+            }
+            if (joypad_status & joypad_lock & (J_A | J_START)) {
                 init_state_game();
                 state = STATE_GAME;
             }
             break;
             
         case STATE_PAUSE:
+            if (joypad_status & joypad_lock & J_START)
+                state = STATE_GAME;
             break;
     }
     joypad_lock = ~joypad_status;
@@ -239,6 +262,16 @@ void init_state_title()
     set_bkg_tiles(0, 0, 20, 18, TitleMap);
     set_sprite_tile(1, TILE_ARROW);
     move_sprite(1, 40, get_arrow_height());
+    update_wrap_text();
+    state = STATE_TITLE;
+}
+
+void init_state_gameover()
+{
+    set_bkg_tiles(0, 0, 20, 18, GameoverMap);
+    move_sprite(1, 0, 0);
+    draw_number(score, 11, 10);
+    state = STATE_GAMEOVER;
 }
 
 // Set food to random position
@@ -246,4 +279,30 @@ inline void set_food_pos() {
     food_x = ((rand() % 19) << 3);
     food_y = (((rand() % 16)+1) << 3);
     move_sprite(1, food_x + 8, food_y + 16);
+}
+
+void update_wrap_text() {
+    if (wrap) {
+        // (O)n
+        set_bkg_tile_xy(12, 15, 24);
+        set_bkg_tile_xy(13, 15, 0);
+    }
+    else {
+        // (O)ff
+        set_bkg_tile_xy(12, 15, 16);
+        set_bkg_tile_xy(13, 15, 16);
+    }
+}
+
+// Draws a number in the background
+void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y) {
+    str_point = str_buf;
+    uint2bcd((uint16_t) number, &bcd);
+    bcd2text(&bcd, 1, str_point);
+    str_point += 5; // only display last 3 digits
+    while (*str_point != '\0') {
+        set_bkg_tile_xy(tile_x, tile_y, *str_point);
+        tile_x++;
+        str_point++;
+    }
 }

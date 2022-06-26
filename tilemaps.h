@@ -8,7 +8,7 @@
    Section       : 
    Bank          : 0
    Map size      : 20 x 18
-   Tile set      : C:\Users\Tomas\Apps\gbdk\GBTD\font.gbr
+   Tile set      : ---
    Plane count   : 1 plane (8 bits)
    Plane order   : Tiles are continues
    Tile offset   : 0
@@ -20,11 +20,8 @@
 #ifndef __tilemaps_h_INCLUDE
 #define __tilemaps_h_INCLUDE
 
-#define TitleMapWidth 20
-#define TitleMapHeight 18
-#define TitleMapBank 0
-
 extern const unsigned char TitleMap[];
+extern const unsigned char GameoverMap[];
 
 #endif
 
