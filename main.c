@@ -66,6 +66,8 @@ inline void tick();
 inline void init_state_game();
 void init_state_title();
 void init_state_gameover();
+void enable_scanline_isr();
+void disable_scanline_isr();
 inline void set_food_pos();
 void update_wrap_text();
 void update_highscore_text();
@@ -79,6 +81,9 @@ void main(void)
     set_bkg_data(37, 1, SnakeTiles);
     set_sprite_data(0, 2, SnakeTiles+16);
 
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
+    STAT_REG |= 0x40; // enable LYC=LY interrupt
+    LYC_REG = 8;
     SHOW_BKG;
     SHOW_WIN;
     SHOW_SPRITES;
@@ -95,6 +100,11 @@ void main(void)
     }
 }
 
+// Disable window at scanline 8 to show play field
+void scanline_isr() {
+    HIDE_WIN;
+}
+
 // Game main loop
 inline void tick()
 {
@@ -102,6 +112,9 @@ inline void tick()
     switch (state)
     {
         case STATE_GAME:
+            // Re-enable window to display score
+            SHOW_WIN;
+
             // Input
             if (!move_lock) {
                 if (plr_dir == DIR_LEFT || plr_dir == DIR_RIGHT) {
@@ -127,10 +140,6 @@ inline void tick()
                     }
                 }
             }
-
-            // Pause
-            if (joypad_status & joypad_lock & J_START)
-                state = STATE_PAUSE;
 
             if (!(sys_time % spd)) {
                 // Movement
@@ -193,6 +202,12 @@ inline void tick()
                     set_food_pos();
                 }
             }
+
+            // Pause
+            if (joypad_status & joypad_lock & J_START) {
+                disable_scanline_isr();
+                state = STATE_PAUSE;
+            }
             break;
 
         case STATE_GAMEOVER:
@@ -229,8 +244,10 @@ inline void tick()
             break;
             
         case STATE_PAUSE:
-            if (joypad_status & joypad_lock & J_START)
+            if (joypad_status & joypad_lock & J_START) {
+                enable_scanline_isr();
                 state = STATE_GAME;
+            }
             break;
     }
     joypad_lock = ~joypad_status;
@@ -260,6 +277,8 @@ inline void init_state_game()
     set_sprite_tile(1, TILE_FOOD);
     initrand(DIV_REG);
     set_food_pos();
+
+    enable_scanline_isr();
 }
 
 void init_state_title()
@@ -277,7 +296,19 @@ void init_state_gameover()
     set_win_tiles(0, 0, 20, 18, GameoverMap);
     move_sprite(1, 0, 0);
     draw_number(score, 11, 10);
+    disable_scanline_isr();
     state = STATE_GAMEOVER;
+}
+
+void enable_scanline_isr() {
+    disable_interrupts();
+    add_LCD(scanline_isr);
+    enable_interrupts();
+}
+
+void disable_scanline_isr() {
+    SHOW_WIN;
+    remove_LCD(scanline_isr);
 }
 
 // Set food to random position
