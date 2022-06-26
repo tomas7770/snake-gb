@@ -1,6 +1,7 @@
 #include <gb/gb.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <rand.h>
 #include <gbdk/font.h>
 
 #include "tiles.h"
@@ -40,12 +41,9 @@ uint8_t food_x, food_y;
 uint8_t score;
 uint8_t spd; // snake moves every spd frames
 bool move_lock; // if true, cannot change snake direction
-bool wrap; // whether screen wrap is enabled or not
+bool wrap = true; // whether screen wrap is enabled or not
 
 uint8_t selected_difficulty; // selected difficulty in menu
-
-uint8_t body_tiles[360]; // tiles occupied by snake body (160/8 * 144/8),
-                         // i.e. tile map with empty tiles or snake tiles
 
 uint16_t ordered_body_tiles[360]; // stores snake body tile indexes in order
                                   // of "creation"
@@ -61,6 +59,7 @@ uint8_t joypad_lock = 255; // lock to check if key started being held in this fr
 inline void tick();
 inline void init_state_game();
 void init_state_title();
+inline void set_food_pos();
 
 void main(void)
 {
@@ -157,22 +156,33 @@ inline void tick()
                 // Delete an old position
                 uint16_t* tile_i = ordered_body_tiles + current_body_tile_i;
                 if (*tile_i != DUMMY_BODY_TILE) {
-                    body_tiles[*tile_i] = TILE_EMPTY;
                     set_bkg_tile_xy((*tile_i)%20, (*tile_i)/20, TILE_EMPTY);
                 }
                 
                 // Record new position
                 uint16_t tile = get_plr_tile();
-                body_tiles[tile] = TILE_SNAKE;
+                if (get_bkg_tile_xy(plr_x >> 3, plr_y >> 3) == TILE_SNAKE) {
+                    // Collision with body
+                    state = STATE_GAMEOVER;
+                    break;
+                }
                 set_bkg_tile_xy(plr_x >> 3, plr_y >> 3, TILE_SNAKE);
                 *tile_i = tile;
                 current_body_tile_i++;
                 if (current_body_tile_i >= get_max_snake_size())
                     current_body_tile_i = 0;
+                
+                // Snake collisions with food
+                if (plr_x == food_x && plr_y == food_y) {
+                    score++;
+                    set_food_pos();
+                }
             }
             break;
 
         case STATE_GAMEOVER:
+            init_state_title();
+            state = STATE_TITLE;
             break;
 
         case STATE_TITLE:
@@ -184,6 +194,8 @@ inline void tick()
                 selected_difficulty++;
                 move_sprite(1, 40, get_arrow_height());
             }
+            if (joypad_status & joypad_lock & J_SELECT)
+                wrap = !wrap;
             if (joypad_status & (J_A | J_START)) {
                 init_state_game();
                 state = STATE_GAME;
@@ -198,18 +210,28 @@ inline void tick()
 
 inline void init_state_game()
 {
-    set_bkg_tiles(0, 0, 20, 18, body_tiles);
+    // Clear background
+    uint8_t empty_tiles[360] = {0};
+    set_bkg_tiles(0, 0, 20, 18, empty_tiles);
+
+    // Reset ordered_body_tiles
     uint16_t* tile_i;
     for (tile_i = ordered_body_tiles; tile_i < ordered_body_tiles+360; tile_i++)
         *tile_i = DUMMY_BODY_TILE; // set to some unused value
+    current_body_tile_i = 0;
+
+    // Reset game variables
     plr_x = 80;
     plr_y = 64;
     plr_dir = DIR_LEFT;
     move_lock = false;
     score = 0;
     spd = spd_table[selected_difficulty];
-    wrap = true;
+
+    // Reset food position
     set_sprite_tile(1, TILE_FOOD);
+    initrand(DIV_REG);
+    set_food_pos();
 }
 
 void init_state_title()
@@ -218,4 +240,11 @@ void init_state_title()
     set_sprite_tile(1, TILE_ARROW);
     selected_difficulty = 2;
     move_sprite(1, 40, get_arrow_height());
+}
+
+// Set food to random position
+inline void set_food_pos() {
+    food_x = ((rand() % 19) << 3);
+    food_y = (((rand() % 16)+1) << 3);
+    move_sprite(1, food_x + 8, food_y + 16);
 }
