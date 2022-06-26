@@ -43,7 +43,7 @@ uint8_t spd; // snake moves every spd frames
 bool move_lock; // if true, cannot change snake direction
 bool wrap = true; // whether screen wrap is enabled or not
 
-uint8_t selected_difficulty; // selected difficulty in menu
+uint8_t selected_difficulty = 2; // selected difficulty in menu
 
 uint16_t ordered_body_tiles[360]; // stores snake body tile indexes in order
                                   // of "creation"
@@ -238,7 +238,6 @@ void init_state_title()
 {
     set_bkg_tiles(0, 0, 20, 18, TitleMap);
     set_sprite_tile(1, TILE_ARROW);
-    selected_difficulty = 2;
     move_sprite(1, 40, get_arrow_height());
 }
 
