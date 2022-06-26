@@ -199,6 +199,7 @@ inline void tick()
                 // Snake collisions with food
                 if (plr_x == food_x && plr_y == food_y) {
                     score++;
+                    draw_number(score, 6, 0);
                     set_food_pos();
                 }
             }
@@ -278,6 +279,8 @@ inline void init_state_game()
     initrand(DIV_REG);
     set_food_pos();
 
+    // HUD stuff
+    set_win_tiles(0, 0, 20, 18, GameHUDMap);
     enable_scanline_isr();
 }
 

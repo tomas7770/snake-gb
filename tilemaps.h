@@ -22,6 +22,7 @@
 
 extern const unsigned char TitleMap[];
 extern const unsigned char GameoverMap[];
+extern const unsigned char GameHUDMap[];
 
 #endif
 
