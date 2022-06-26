@@ -1,6 +1,6 @@
 # Snake GB
 
-An homebrew implementation of the classic Snake game for Nintendo Game Boy, a.k.a. "DMG". Written by [tomas7770](https://github.com/tomas7770) in C, using the GDBK-2020 API.
+An homebrew implementation of the classic Snake game for Nintendo Game Boy, a.k.a. "DMG". Written by [tomas7770](https://github.com/tomas7770) in C, using the GBDK-2020 API.
 
 Tested on BGB 1.5.9 emulator, not tested on real hardware.
 
