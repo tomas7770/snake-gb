@@ -1,3 +1,8 @@
+/* Snake implementation for "DMG" Game Boy, using GBDK-2020
+   Made by tomas7770
+   Tested on BGB 1.5.9, not tested on real hardware
+*/
+
 #include <gb/gb.h>
 #include <stdint.h>
 #include <stdbool.h>
