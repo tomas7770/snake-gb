@@ -97,10 +97,10 @@ void main(void)
     init_state_title();
 
     while(1) {
-		// Game main loop processing
+        // Game main loop processing
         tick();
 
-		// Done processing, yield CPU and wait for start of next frame
+        // Done processing, yield CPU and wait for start of next frame
         wait_vbl_done();
     }
 }
