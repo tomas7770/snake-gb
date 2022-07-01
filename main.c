@@ -262,8 +262,7 @@ inline void tick()
 inline void init_state_game()
 {
     // Clear background
-    uint8_t empty_tiles[360] = {0};
-    set_bkg_tiles(0, 0, 20, 18, empty_tiles);
+    fill_bkg_rect(0, 0, 20, 18, 0);
 
     // Reset ordered_body_tiles
     uint16_t* tile_i;
