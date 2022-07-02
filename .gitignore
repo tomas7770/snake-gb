@@ -1,2 +1,7 @@
 *.gb
 *.sav
+*.lst
+*.o
+*.sym
+savedata.asm
+.vscode/

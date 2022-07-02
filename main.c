@@ -9,9 +9,13 @@
 #include <rand.h>
 #include <gbdk/font.h>
 #include <gb/bcd.h>
+#include <string.h>
 
 #include "tiles.h"
 #include "tilemaps.h"
+#include "savedata.h"
+
+#define SAVE_SIG 0x1234 // value of save signature
 
 #define STATE_GAME 0
 #define STATE_GAMEOVER 1
@@ -56,8 +60,6 @@ uint16_t ordered_body_tiles[360]; // stores snake body tile indexes in order
                                   // of "creation"
 uint16_t current_body_tile_i; // index of next element in the array above
 
-uint8_t high_scores[10]; // 5 speed values * (screen wrap or not)
-
 uint8_t joypad_status; // keys held (in this frame)
 uint8_t joypad_lock = 255; // lock to check if key started being held in this frame;
                            // locks at the end of game loop if key held,
@@ -80,6 +82,14 @@ void draw_number(uint8_t number, uint8_t tile_x, uint8_t tile_y);
 
 void main(void)
 {
+    // Initialize high scores if none saved
+    ENABLE_RAM_MBC1;
+    if (save_signature != SAVE_SIG) {
+        save_signature = SAVE_SIG;
+        memset(high_scores, 0, 10);
+    }
+    DISABLE_RAM_MBC1;
+
     // Initialize tile data
     font_init();
     font_load(font_min);
@@ -219,9 +229,11 @@ inline void tick()
         case STATE_GAMEOVER:
             if (joypad_status & (J_A | J_START)) {
                 // Save high score (if it's the case)
+                ENABLE_RAM_MBC1;
                 uint8_t* high_score_i = get_highscore_ptr();
                 if (score > *high_score_i)
                     *high_score_i = score;
+                DISABLE_RAM_MBC1;
 
                 init_state_title();
             }
@@ -339,8 +351,10 @@ void update_wrap_text() {
 }
 
 void update_highscore_text() {
+    ENABLE_RAM_MBC1;
     uint8_t* high_score_i = get_highscore_ptr();
     draw_number(*high_score_i, 5, 0);
+    DISABLE_RAM_MBC1;
 }
 
 // Draws a number in the window
