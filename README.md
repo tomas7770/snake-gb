@@ -4,8 +4,6 @@ An homebrew implementation of the classic Snake game for Nintendo Game Boy, a.k.
 
 Tested on BGB 1.5.9 emulator, not tested on real hardware.
 
-**High scores do not save and are lost upon reset.**
-
 ## Build instructions
 
 1. Download/install a recent version of [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020)
